@@ -1,16 +1,52 @@
 import * as InboxSDK from '@inboxsdk/core';
 
-InboxSDK.load(2, "Hello World!").then((sdk) => {
-  // the SDK has been loaded, now do something with it!
+InboxSDK.load(2, "sdk_DavidConradTest_305edd048f").then((sdk) => {
   sdk.Compose.registerComposeViewHandler((composeView) => {
-    // a compose view has come into existence, do something with it!
     composeView.addButton({
-      title: "My Nifty Button!",
-      iconUrl:
-        "https://lh5.googleusercontent.com/itq66nh65lfCick8cJ-OPuqZ8OUDTIxjCc25dkc4WUT1JG8XG3z6-eboCu63_uDXSqMnLRdlvQ=s128-h128-e365",
+      title: "New Pie Chart",
+      iconUrl: "https://cdn-icons-png.flaticon.com/128/12461/12461700.png",
       onClick(event) {
-        event.composeView.insertTextIntoBodyAtCursor("Hello World!");
-      },
+        const { el, textarea } = createPopupContent();
+
+        const modal = sdk.Widgets.showModalView({
+          title: "New Pie Chart",
+          el: el,
+          buttons: [
+            {
+              text: "Save",
+              onClick: function () {
+                const userText = textarea.value;
+                event.composeView.insertTextIntoBodyAtCursor(userText);
+                modal.close();
+              }
+            },
+            {
+              text: "Cancel",
+              onClick: function () {
+                modal.close();
+              }
+            }
+          ]
+        });
+      }
     });
   });
 });
+
+function createPopupContent() {
+  const div = document.createElement('div');
+  div.style.padding = "2rem";
+
+  const label = document.createElement('label');
+  label.textContent = "Additional Info:";
+
+  const textarea = document.createElement('textarea');
+  textarea.style.width = "100%";
+  textarea.style.height = "100px";
+
+  div.appendChild(label);
+  div.appendChild(document.createElement('br'));
+  div.appendChild(textarea);
+
+  return { el: div, textarea };
+}
