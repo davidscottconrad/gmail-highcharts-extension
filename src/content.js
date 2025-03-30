@@ -7,10 +7,7 @@ InboxSDK.load(2, "sdk_DavidConradTest_305edd048f").then((sdk) => {
       title: "New Pie Chart",
       iconUrl: "https://cdn-icons-png.flaticon.com/128/12461/12461700.png",
       async onClick(event) {
-
-        const html = await fetch(
-          chrome.runtime.getURL("drawer.html"))
-          .then(res => res.text());
+        const html = await fetch(chrome.runtime.getURL("drawer.html")).then(res => res.text());
 
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
@@ -21,10 +18,20 @@ InboxSDK.load(2, "sdk_DavidConradTest_305edd048f").then((sdk) => {
           buttons: [
             {
               text: "Save",
-              onClick: function () {
+              onClick: async function () {
+                const svg = tempDiv.querySelector('#highchart-container svg');
+                if (svg) {
+                  const imgSrc = await convertSvgToPngDataUrl(svg);
+                  const imgHTML = `<img src="${imgSrc}"/>`;
+                  event.composeView.insertHTMLIntoBodyAtCursor(imgHTML);
+                }
+
                 const textarea = tempDiv.querySelector("#extra-info");
                 const userText = textarea?.value || "";
-                event.composeView.insertTextIntoBodyAtCursor(userText);
+                if (userText) {
+                  event.composeView.insertTextIntoBodyAtCursor(`<p>${userText}</p>`);
+                }
+
                 modal.close();
               }
             },
@@ -51,7 +58,6 @@ InboxSDK.load(2, "sdk_DavidConradTest_305edd048f").then((sdk) => {
 });
 
 function addHighCharts(container) {
-  console.log("Rendering Highcharts...");
   Highcharts.chart(container, {
     chart: {
       type: 'pie'
@@ -87,5 +93,25 @@ function addHighCharts(container) {
       ]
     }]
   });
-  
+}
+
+function convertSvgToPngDataUrl(svgNode) {
+  return new Promise((resolve) => {
+    const svgData = new XMLSerializer().serializeToString(svgNode);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = function () {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width ;
+      canvas.height = img.height ;
+      const context = canvas.getContext('2d');
+      context.scale(1, 1);
+      context.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.src = url;
+  });
 }
